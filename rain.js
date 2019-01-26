@@ -1,8 +1,8 @@
 var canvas, ctx, DPR, options, canvasWidth, canvasHeight, wind_anger;
-var hasBounce, maxNum, numLevel, size_range, speed, wind_direction, drop_chance, gravity;
+var hasBounce, maxNum, numLevel, speed, wind_direction, drop_chance, gravity;
 var speed_x, speed_y;
 var drops = [], bounces = [];
-//将角度乘以 0.017453293 （2PI/360）即可转换为弧度。
+//将角度乘以 0.017453293 （2PI/360）可转换为弧度。
 var eachAnger = 0.017453293; 
 
 window.requestAnimFrame =
@@ -26,17 +26,15 @@ function Rain(opts) {
 	canvas.style.pointerEvents = 'None';
 	canvas.style.width = window.innerWidth + 'px';
 	canvas.style.height = window.innerHeight + 'px';
-	ctx = canvas.getContext("2d");
-	////兼容高清屏幕，canvas画布像素也要相应改变
+	ctx = canvas.getContext('2d');
 	DPR = window.devicePixelRatio;
-	//canvas画板像素大小， 需兼容高清屏幕，故画板canvas长宽应该乘于DPR
 	canvas.width = canvas.clientWidth * DPR;
 	canvas.height = canvas.clientHeight * DPR;
 	// 获取设置的值
 	speed = opts.speed || [10,100]; //风速范围，初始值加随机范围
-	size_range = opts.size_range || [0.5,1.5]; //大小半径范围
 	hasBounce = opts.hasBounce == undefined ? true : opts.hasBounce; //是否有反弹效果or false,
-	var wind_max = 270 + Math.atan(canvas.width/canvas.height) / eachAnger
+	// 最大角度为画布的右上角到左下角（或左上角到右下角）
+	var wind_max = 270 + Math.atan(canvas.width/canvas.height) / eachAnger 
 	var wind_min = 270 - Math.atan(canvas.width/canvas.height) / eachAnger
 	//风的角度
 	if(opts.wind_direction > wind_max) {
@@ -56,20 +54,9 @@ function Rain(opts) {
 };
 
 function setStyle(){
-
 	ctx.lineWidth = 1.5 * DPR;
-	// ctx.strokeStyle = 'rgba(223,223,223,0.6)';
 	ctx.fillStyle = 'rgba(223,223,223,0.6)';
-
 };
-
-function easeIn(t, b, c, d) {
-    return c * (t /= d) * t + b;
-}
-
-function easeOut(t, b, c, d) {
-    return -c *(t /= d)*(t-2) + b;
-}
 
 function update() {
 	//清理画图
@@ -110,6 +97,7 @@ function update() {
 			};
 		};
 	};
+	//监听窗口大小改变
 	window.addEventListener( 'resize', onWindowResize, false );
 	//不断循环update
 	requestAnimFrame(update);
@@ -118,14 +106,12 @@ function update() {
 function onWindowResize() {
 	canvas.style.width = window.innerWidth + 'px';
 	canvas.style.height = window.innerHeight + 'px';
-	//设置画板宽高
 	canvas.width = canvas.clientWidth * DPR;
 	canvas.height = canvas.clientHeight * DPR;
 	setStyle();
 };
 
 var Vector = function(x, y) {
-	//私有属性 横向速度x ,纵向速度y
 	this.x = x || 0;
 	this.y = y || 0;
 };
@@ -143,24 +129,19 @@ Vector.prototype.add = function(v) {
 };
 
 Vector.prototype.copy = function() {
-	//返回一个同等速度属性的Vector实例
 	return new Vector(this.x, this.y);
 };
 
-//构造函数
 var Drop = function() {
-	//随机设置drop的初始坐标 
+	//计算雨滴距离边缘的位置
 	var edge = Math.tan((270 - wind_direction) * eachAnger) * canvas.height;
+	//计算雨滴坐标
 	if(edge >= 0){
 		this.pos = new Vector(Math.random() * (canvas.width + edge), 0)
 	}else{
 		this.pos = new Vector(Math.random() * (canvas.width - edge) + edge, 0)
 	}
-	//设置下落元素的大小
-	//通过调用的OPTS函数的半径范围进行随机取值
-	this.radius = (size_range[0] + Math.random() * size_range[1]) * DPR;
-	//获得drop初始速度
-	//通过调用的OPTS函数的速度范围进行随机取值
+	//生成一个随机风速
 	this.speed = (speed[0] + Math.random() * speed[1]) * DPR;
 	this.prev = this.pos;
 	//获得风向的角度
@@ -191,13 +172,9 @@ Drop.prototype.setStyle = function() {
    	ctx.strokeStyle = color;
 };
 
-//公有方法-draw
 Drop.prototype.draw = function() {
 	ctx.beginPath();
 	ctx.moveTo(this.prev.x, this.prev.y);
-	// var ax = Math.abs(this.radius * Math.cos(wind_anger));
-	// var ay = Math.abs(this.radius * Math.sin(wind_anger));
-	// ctx.bezierCurveTo(this.pos.x + ax, this.pos.y + ay, this.prev.x + ax , this.prev.y + ay, this.pos.x, this.pos.y);
 	ctx.lineTo(this.pos.x, this.pos.y);
 	ctx.stroke();
 };
